@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <h1>Welcome {{ user }}</h1>
+    {% for object in object_list %}
+    <h1>{{ object.username }}</h1>
+
+        <h1>{{ object.phone_number }}
+    </h1>
+    <img src="{{ object.img.url }}" alt="{{ object.image.url }}">
+    <img src="C:/Users/IBTJ/Desktop/Python/smilera/smilera/media/Screenshot_6.png" alt="abc">
+
+    {% endfor %}
+
+{% endblock %}

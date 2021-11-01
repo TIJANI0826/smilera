@@ -1,0 +1,26 @@
+{% load static %}
+
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,300italic,400italic,600' rel='stylesheet' type='text/css'>
+<link href="//netdna.bootstrapcdn.com/font-awesome/3.1.1/css/font-awesome.css" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/form.css' %}">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
+
+<div class="testbox">
+  <h1>Registration</h1>
+
+  <form method="post">
+    <h2>Sign up</h2>
+      
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% for item in form %}
+        {{ item.label }}<br>
+        {{ item }}
+        <br>
+        {% endfor %}
+        <button class="btn-primary">SIGN UP</button>
+        
+  </form>
+  
+</div>
