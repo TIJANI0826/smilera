@@ -53,19 +53,19 @@
             <div class="collapse navbar-collapse" id="navbar">
 
                 <ul class="nav navbar-nav navbar-right">
-                
 
-                    
+
+
                     <li class="">
-                        
-                           
+
+
                         <span class="caret"></span></a>
                         <li><a href="{% url 'home' %}">Home</a></li>
                         <li><a href="{% url 'users:gym-user-signup' %}">Register Account</a></li>
                         <li><a href="{% url 'login' %}">Sign In</a></li>
-                        
+
                     </li>
-                    
+
                     </ul>
             </div>
             {% endif %}
@@ -82,14 +82,20 @@
                         </a>
                     </li>
                     <li class="">
-                        <a href="{% url 'users:gym-user-profile' %}">
+                        <a href="{% url 'cart:all-cart' %}">
                             My inventory
                         </a>
-                        <li class="">
-                            <a href="{% url 'users:profile' %}">
-                                Profile  
-                            </a>
-                        </li>
+                    </li>
+                    <li class="">
+                        <a href="{% url 'users:profile' %}">
+                            Profile
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="{% url 'products:all-product' %}">
+                            All products
+                        </a>
+                    </li>
                         <!-- <li class="">
                             <a class="dropdown-toggle" data-toggle="dropdown" href="{% url 'users:profile' %}">
                                 Profile
@@ -113,7 +119,7 @@
                             <li><a href="{% url 'users:gym-user-signup' %}">Create Task</a></li>
                              <li><a href="{% url 'users:gym-user-signup' %}">List Tasks</a></li>
                         </ul>
-                            
+
                     </li>
 
                     <li>
@@ -168,9 +174,9 @@
                             <li><a href="{% url 'users:gym-user-signup' %}">View Requests</a></li>
                         </ul>
                     </li>
-                    
-                             
-                    
+
+
+
                     {% endif %}
                     <li>
                         <a href="{% url 'logout' %}">Logout</a>
@@ -193,13 +199,13 @@
             <div class="inner">
             {% if request.user.is_authenticated %}
                 <ul class="nav navbar-nav">
-                    
+
                     <li><a href="{% url 'users:gym-user-profile' %}">Profile</a></li>
 
                     {% if request.user.is_admin %}
                     <li><a href="{% url 'users:gym-user-signup' %}">Create Item</a></li>
                     <li><a href="{% url 'users:gym-user-signup' %}">Edit Item</a></li>
-                                        
+
                     {% else %}
                     <li><a href="{% url 'users:gym-user-signup' %}">Members</a></li>
                     {% endif %}

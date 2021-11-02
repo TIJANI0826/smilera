@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-g=46hxf+t%z3iean6+m^m)mkb=u-p+wy=p8oypnmkz2-i%d8^4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['tijani.pythonanywhere.com']
 
 
 # Application definition
@@ -37,8 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 3rd party apps 
-    'rest_framework', 
+    # 3rd party apps
+    'rest_framework',
     'corsheaders',
     'class',
     'inventory',
@@ -89,13 +89,27 @@ WSGI_APPLICATION = 'smilera.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'tijani$smilera',
+        'USER': 'tijani',
+        'PASSWORD': 'adewaletj08',
+        'HOST': 'tijani.mysql.pythonanywhere-services.com',
+        'OPTIONS' : {
+        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        }
     }
-}
 
+
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -144,10 +158,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
-
+STATIC_ROOT =  os.path.join(BASE_DIR / 'static' )
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR,'static')
-] 
+    os.path.join(BASE_DIR, 'staticfiles')
+]
 
 MEDIA_URL = '/media/'
 

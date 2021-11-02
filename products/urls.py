@@ -18,7 +18,8 @@ from .views import (
     SearchByName,
     GetUserFavoriteProductsAPI,
     EndProductDuration,
-    GetAllRatedProduct
+    GetAllRatedProduct,
+    ProductListView
 )
 
 
@@ -44,6 +45,7 @@ urlpatterns = [
 
     path('rate-product/', RequestRateProduct.as_view(), name='rate-products'),
     path('all-rated-products/', GetAllRatedProduct.as_view(), name='list-rated-products'),
+    path('all-product',ProductListView.as_view(), name='all-product'),
 
 ]
 

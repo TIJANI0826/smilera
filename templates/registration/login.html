@@ -6,20 +6,21 @@
 <link rel="stylesheet" href="{% static 'css/style.css' %}">
 <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
 
-<div class="testbox">
-  <h1>Registration</h1>
+<div class="container">
+    <div class="testbox">
+      <h1>LOGIN</h1>
 
-  <form method="post">
-  
-      <h2>Sign up as a {{ user_type }}</h2>
-        {% csrf_token %}
-        <input type="hidden" name="next" value="{{ next }}">
-        {% for item in form %}
-        {{ item.label }}
-        {{ item }}
-        <br>
-        {% endfor %}
-        <button class="btn-primary">Login</button>
-          <a href="{% url 'users:gym-user-signup' %}">OR Register Account</a></li>
-  </form>
+      <form method="post">
+
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            {% for item in form %}
+            {{ item.label }}
+            {{ item }}
+            <br>
+            {% endfor %}
+            <button class="btn-primary">Login</button>
+              <a href="{% url 'users:gym-user-signup' %}">OR Register Account</a></li>
+      </form>
+    </div>
 </div>

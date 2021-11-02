@@ -51,7 +51,7 @@ class GymUserSignupSerializer(serializers.ModelSerializer):
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ('username', 'email', 'password')
+        fields = ('username', 'email', 'first_name', 'last_name','phone_number', 'password')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):

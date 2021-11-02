@@ -1,9 +1,9 @@
 from django.db import models
-from users.models import GymUser
+from users.models import User,GymUser
 from products.models import Product,ProductImage,ProductRateImage
 # Create your models here.
 class Cart(models.Model):
-    user = models.ForeignKey(GymUser, on_delete=models.CASCADE, related_name='carts')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='carts')
     is_ordered = models.BooleanField(default=False)
     is_arrived = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -11,18 +11,22 @@ class Cart(models.Model):
 
     def __str__(self):
         return '{} cart'.format(self.user.first_name)
-    
+
     def calculate_price(self):
         total_price = 0
         products = self.products.all()
         for product in products:
             total_price += product.product.price * product.quantity
         return total_price
-    
+
     def calculate_taxes(self):
         total_price = self.calculate_price()
         taxes = (4/100) * total_price
         return taxes
+
+    def calculate_total_price(self):
+        return self.calculate_taxes() + self.calculate_price()
+
 
 
 class CartItem(models.Model):

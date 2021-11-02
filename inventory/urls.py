@@ -11,4 +11,5 @@ urlpatterns = [
     path('get-price/',views.GetCartPriceAPI.as_view(), name='get-price'),
     path('arrived/<int:cart_item_id>/', views.ArrivalCartAPI.as_view(), name='is-arrived'),
     path('ordered-carts/', views.GetAllOrderedCart.as_view(), name='ordered-carts'),
+    path('cart/', views.GetAllOrderedCartView.as_view(), name="all-cart"),
 ]

@@ -4,19 +4,20 @@ from rest_framework.response import Response
 from rest_framework import permissions, status
 from payment.views import get_client_ip
 from payment import secrets
+from django.views.generic import CreateView, ListView, UpdateView,DetailView
 import json , requests , hashlib
 from rest_framework.generics import (
-    ListAPIView, 
-    CreateAPIView, 
+    ListAPIView,
+    CreateAPIView,
     GenericAPIView
 )
 
 from .serializers import(
-    ProductSerializer, 
-    CreateRateProductSerializer, 
+    ProductSerializer,
+    CreateRateProductSerializer,
     ProductDetailSerializer,
     ListRateProductSerializer
-) 
+)
 
 from .models import (
     Product,
@@ -56,7 +57,7 @@ class ProductAPIViewSet(ModelViewSet):
         else:
             permission_classes = (permissions.IsAuthenticated,)
         return [permission() for permission in permission_classes]
-    
+
     def perform_create(self, serializer):
         product = serializer.save(owner=self.request.user)
         images = dict((self.request.data).lists())['images']
@@ -67,6 +68,9 @@ class ProductAPIViewSet(ModelViewSet):
             )
         send_sms_messages(self.request.user.following.all())
 
+class ProductListView(ListView):
+    model = Product
+    context_object_name = 'product_list'
 
 class ToggleFavoriteProductAPI(APIView):
 
@@ -76,7 +80,7 @@ class ToggleFavoriteProductAPI(APIView):
 
         if get_product:
             # if product exists in fav product of the current user,
-            # remove product from the fav list of the current user 
+            # remove product from the fav list of the current user
             if get_product in current_user.favorite_products.all():
                 current_user.favorite_products.remove(get_product)
                 return Response(
@@ -84,7 +88,7 @@ class ToggleFavoriteProductAPI(APIView):
                     status=status.HTTP_200_OK
                     )
             # if product doesn't exist in fav products of the current user,
-            # add product to the fav products of the current user 
+            # add product to the fav products of the current user
             else:
                 current_user.favorite_products.add(get_product)
                 return Response(
@@ -98,10 +102,10 @@ class ToggleFavoriteProductAPI(APIView):
                 )
 
 class GetUserFavoriteProductsAPI(ListAPIView):
-    
+
     def get_queryset(self):
         return self.request.user.favorite_products.all()
-    
+
     serializer_class = ProductSerializer
 
 class BiddingProductAPI(APIView):
@@ -119,14 +123,14 @@ class BiddingProductAPI(APIView):
                 {'error': 'this product has a fixed price'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        # normal bidding 
+
+        # normal bidding
         if request.data.get('new_price'):
             new_price = request.data['new_price']
 
-            # check if the new price is greater than current price 
-            # and check also if the new price is greater than the current bidding limit 
-            
+            # check if the new price is greater than current price
+            # and check also if the new price is greater than the current bidding limit
+
             if new_price <= get_product.price:
                 return Response(
                     {'error': 'new price should be higher than the current price'},
@@ -137,12 +141,12 @@ class BiddingProductAPI(APIView):
                 get_product.price = new_price
                 get_product.last_user_bid = request.user
                 get_product.save()
-            
+
             else:
                 get_product.price = new_price + 1
                 get_product.save()
 
-            # user serializer 
+            # user serializer
             user_serializer = UserDataSerializer(get_product.last_user_bid)
 
             return Response(
@@ -152,12 +156,12 @@ class BiddingProductAPI(APIView):
                 },
                 status=status.HTTP_201_CREATED
             )
-        
+
         # automatic bidding
         elif request.data.get('limit'):
             limit = request.data['limit']
             # check if the limit is greater than the current price
-            # and also greater than the bidding limit 
+            # and also greater than the bidding limit
             if limit == '0':
                 if request.user != get_product.last_user_bid:
                     return Response(
@@ -185,15 +189,15 @@ class BiddingProductAPI(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            else: 
+            else:
                 # limit > get_product.price and limit > get_product.bidding_limit:
                 get_product.last_user_bid = request.user
-                get_product.price += 1 
+                get_product.price += 1
                 get_product.bidding_limit = limit
 
                 get_product.save()
 
-                # user serializer 
+                # user serializer
                 user_serializer = UserDataSerializer(get_product.last_user_bid)
                 return Response(
                     {
@@ -202,7 +206,7 @@ class BiddingProductAPI(APIView):
                         'user': user_serializer.data
                     },
                     status=status.HTTP_201_CREATED
-                    
+
                 )
 
         else:
@@ -212,13 +216,13 @@ class BiddingProductAPI(APIView):
             )
 
 class AutomaticBiddingProductAPI(APIView):
-    
+
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request, product_id):
         get_product = Product.objects.filter(id=product_id).first()
-        if get_product: 
-                # if less than limit 
+        if get_product:
+                # if less than limit
                 if get_product.bidding_limit > get_product.price:
                     get_product.price += 1
                     get_product.save()
@@ -257,9 +261,9 @@ class LowPriceProducts(ListAPIView):
     queryset = Product.objects.order_by('price').filter(in_stock__gte=1)
     serializer_class = ProductSerializer
     permissions = (permissions.AllowAny,)
-    
+
 class SearchByCategory(APIView):
-    
+
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request):
@@ -292,7 +296,7 @@ class SearchBySubCategory(APIView):
 class SearchByName(APIView):
     permission_classes = (permissions.AllowAny,)
     def post(self, request):
-        if request.data.get('name'):        
+        if request.data.get('name'):
             products = Product.objects.filter(name__icontains=request.data['name'], in_stock__gte=1)
             product_serializer = ProductSerializer(products, many=True)
             return Response(product_serializer.data, status=status.HTTP_200_OK)
@@ -304,7 +308,7 @@ class SearchByName(APIView):
 
 class EndProductDuration(APIView):
     def post(self, request, product_id):
-        
+
         # check if the product exist
         try:
             product = Product.objects.get(id=product_id)
@@ -313,7 +317,7 @@ class EndProductDuration(APIView):
                 {'error': 'product is not exist'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         if request.user == product.owner:
             product.duration = datetime.datetime.now()
             product.save()
@@ -322,13 +326,13 @@ class EndProductDuration(APIView):
                 asyncio.run(send_single_message(product.last_user_bid, 'تهانينا لك, لقد فزت بالمزاد ويجب عليك التوجه الي سلة المشتريات الخاصة بحسابك الشخصي'))
                 get_cart, _ = Cart.objects.get_or_create(user=product.last_user_bid)
 
-                # add product to the cart item 
+                # add product to the cart item
                 CartItem.objects.create(
                     product=product,
                     quantity=1,
                     cart=get_cart
                 )
-                
+
             product_serializer = ProductSerializer(product)
             return Response(
                 product_serializer.data,
@@ -432,7 +436,7 @@ class RequestRateProduct(CreateAPIView):
             return Response(rate_product.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class GetAllRatedProduct(APIView):
-    
+
     def get(self, request):
         queryset = RateProduct.objects.filter(owner=self.request.user, is_rated=True)
         serializer = ListRateProductSerializer(queryset, many=True)

@@ -36,8 +36,8 @@ from rest_framework.generics import UpdateAPIView
 from rest_framework.parsers import MultiPartParser
 
 from .models import User
-from .serializers import( 
-    LoginSerializer, 
+from .serializers import(
+    LoginSerializer,
     SignupSerializer,
     GymUserSignupSerializer,
     UpdateUserSerializer,
@@ -55,7 +55,7 @@ class GymUserSignUpView(CreateView):
     form_class = GymUserForm
     template_name = 'registration/signup_form.html'
 
-    
+
     def get_context_data(self, **kwargs):
         kwargs['user_type'] = 'Gym User'
         return super().get_context_data(**kwargs)
@@ -64,7 +64,7 @@ class GymUserSignUpView(CreateView):
         user = form.save()
         login(self.request, user)
         return redirect('users:gym-user-profile')
-        
+
 class GymUserSignUpAPIView(GenericAPIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = GymUserSignupSerializer
@@ -119,13 +119,58 @@ class ProfileView(DetailView):
         """
         Fetching user profile for viewing
         """
-        obj = GymUser.objects.get(username=self.request.user.gymuser.username)
+        obj = GymUser.objects.get(username=self.request.user.username)
         return obj
-    
+
     def get_context_data(self, **kwargs):
         return super().get_context_data(**kwargs)
 
 
+class GymLoginAPIView(GenericAPIView):
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = LoginSerializer
+
+    def post(self, request):
+
+        username = User.objects.filter(email=request.data['email']).first()
+        if not username:
+            username = User.objects.filter(email=request.data['email']).first()
+
+            if not username:
+                return Response(
+                    {'error': 'your email or phone number is not exist in our database'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        user = authenticate(request, username=username.email, password=request.data['password'])
+        if user:
+            if user.is_verified:
+                user_serialzer = LoginSerializer(data=request.data)
+                if user_serialzer.is_valid():
+                    user_token, _ = Token.objects.get_or_create(user=user)
+                    serializer = UserDataSerializer(user)
+                    return Response(
+                        {
+                            "token": user_token.key,
+                            "user": serializer.data
+                        },
+                        status=status.HTTP_200_OK
+                    )
+                else:
+                    return Response(
+                        {'error': user_serialzer.errors},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                return Response(
+                    {'error': "user is not verified"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            return Response(
+                {'error': 'make sure about your email and your password please'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 
@@ -140,9 +185,9 @@ class ProfileView(DetailView):
 # class LoginAPIView(GenericAPIView):
 #     permission_classes = (permissions.AllowAny,)
 #     serializer_class = LoginSerializer
-    
+
 #     def post(self, request):
-        
+
 #         username = User.objects.filter(phone_number=request.data['email']).first()
 #         if not username:
 #             username = User.objects.filter(email=request.data['email']).first()
@@ -206,15 +251,15 @@ class ProfileView(DetailView):
 
 # class Verification(APIView):
 #     '''
-#         verification user 
+#         verification user
 #         params:
-#             - code : pass code 
+#             - code : pass code
 #             - phone_number: user phone number
 #     '''
 #     permission_classes = (permissions.AllowAny,)
 
 #     def post(self, request):
-        
+
 #         if not request.data.get('code') and not request.data.get('phone_number'):
 #             return Response(
 #                 {'error': 'please add your pass code and phone number'}

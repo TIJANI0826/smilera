@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
+from django.views.generic import CreateView, ListView, UpdateView,DetailView
 
 from .models import (
     Cart,
@@ -13,23 +14,59 @@ from .serializers import CartItemSerializers
 
 class GetAllOrderedCart(APIView):
     def get(self, request):
-        
+
         # get user cart
         get_user_carts = Cart.objects.filter(user=request.user, is_ordered=True)
         cart_items_objects = []
-        
+
         for cart in get_user_carts:
             cart_items = cart.products.filter(is_arrived__isnull=True)
             if cart_items:
                 cart_item_serializer = CartItemSerializers(cart_items, many=True)
                 cart_items_objects.append(cart_item_serializer.data)
-        
+
         return Response(
             {
                 'data':cart_items_objects
             },
             status=status.HTTP_200_OK
         )
+
+
+class GetAllOrderedCartView(ListView):
+    model = Cart
+    template_name = 'cart.html'
+
+
+    def get(self,request):
+        """
+        Fetching user profile for viewing
+        """
+        get_user_cart = Cart.objects.get(user=request.user)
+
+        return get_user_cart
+
+    def get_context_data(self,request,**kwargs):
+
+        # get user cart
+        try:
+            get_user_cart = Cart.objects.get(user=request.user)
+
+        except Cart.DoesNotExist:
+            kwargs['cart_message'] = "cart does not"
+
+        cart_item_objects = get_user_cart.products.all()
+        cart_item_serializer = CartItemSerializers(cart_item_objects, many=True)
+        kwargs['user_type'] = 'Gym User'
+        kwargs['cart_id'] = get_user_cart.id
+        kwargs['data'] = cart_item_serializer.data
+        kwargs['price'] = get_user_cart.calculate_price()
+        kwargs['taxes'] = get_user_cart.calculate_taxes()
+        # 'shipping_price':get_user_cart.calculate_shipping_price(),
+        # 'cash_shipping_price': get_user_cart.calculate_shipping_cash_price(),
+        kwargs['total_price'] = get_user_cart.calculate_total_price()
+        return super().get_context_data(**kwargs)
+
 
 class GetCartAPI(APIView):
 
@@ -52,8 +89,8 @@ class GetCartAPI(APIView):
                 'data':cart_item_serializer.data,
                 'price': get_user_cart.calculate_price(),
                 'taxes': get_user_cart.calculate_taxes(),
-                'shipping_price':get_user_cart.calculate_shipping_price(),
-                'cash_shipping_price': get_user_cart.calculate_shipping_cash_price(),
+                # 'shipping_price':get_user_cart.calculate_shipping_price(),
+                # 'cash_shipping_price': get_user_cart.calculate_shipping_cash_price(),
                 'total_price': get_user_cart.calculate_total_price()
             },
             status=status.HTTP_200_OK
@@ -63,7 +100,7 @@ class GetCartAPI(APIView):
 class GetCartPriceAPI(APIView):
 
     def get(self, request):
-        
+
         # get user cart
         try:
             get_user_cart = Cart.objects.get(user=request.user, is_ordered=False)
@@ -73,13 +110,13 @@ class GetCartPriceAPI(APIView):
                 {'error': 'user does not have cart'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         return Response(
             {
                 'price': get_user_cart.calculate_price(),
                 'taxes': get_user_cart.calculate_taxes(),
-                'shipping_price': get_user_cart.calculate_shipping_price(),
-                'cash_shipping_price': get_user_cart.calculate_shipping_cash_price(),
+                # 'shipping_price': get_user_cart.calculate_shipping_price(),
+                # 'cash_shipping_price': get_user_cart.calculate_shipping_cash_price(),
                 'total_price': get_user_cart.calculate_total_price()
             },
             status=status.HTTP_200_OK
@@ -91,7 +128,7 @@ class AddCartProductAPI(APIView):
         # get user cart
         get_user_cart, _ = Cart.objects.get_or_create(user=request.user, is_ordered=False)
 
-        # get product by product id 
+        # get product by product id
         try:
             get_product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
@@ -99,7 +136,7 @@ class AddCartProductAPI(APIView):
                 {'error': "product is not exist"},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # get quantity from requested data
         try:
             quantity = request.data['quantity']
@@ -109,7 +146,7 @@ class AddCartProductAPI(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # check if the product in the cart 
+        # check if the product in the cart
         get_cart_item, created = CartItem.objects.get_or_create(
             product=get_product,
             cart=get_user_cart
@@ -132,8 +169,8 @@ class AddCartProductAPI(APIView):
 
 class RemoveCartProduct(APIView):
     def delete(self, request, product_id):
-        
-        # get the cart 
+
+        # get the cart
         try:
             get_user_cart = Cart.objects.get(user=request.user, is_ordered=False)
         except Cart.DoesNotExist:
@@ -141,8 +178,8 @@ class RemoveCartProduct(APIView):
                 {'error': 'user does not have cart'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
-        # get product by product id 
+
+        # get product by product id
         try:
             get_product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
@@ -150,7 +187,7 @@ class RemoveCartProduct(APIView):
                 {'error': "product is not exist"},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         try:
             get_cart_item = CartItem.objects.get(product=get_product, cart=get_user_cart)
         except CartItem.DoesNotExist:
@@ -158,7 +195,7 @@ class RemoveCartProduct(APIView):
                 {'error': 'product is not exists in the cart'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # delete cart item from cart
         get_cart_item.delete()
         return Response(
@@ -172,7 +209,7 @@ class ArrivalCartAPI(APIView):
         is_arrived : "True" or "False"
     '''
     def post(self, request, cart_item_id):
-        
+
         # check if the cart is exist in the database
         try:
             get_cart_item = CartItem.objects.get(id=cart_item_id)
@@ -181,7 +218,7 @@ class ArrivalCartAPI(APIView):
                 {'error': 'cart does not exist'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         if not request.data.get('is_arrived'):
             return Response(
                 {'error': 'please enter if the cart is arrived or not'},
